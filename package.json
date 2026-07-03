@@ -6,9 +6,12 @@
     "dev:frontend": "cd frontend && npm run dev",
     "deploy:worker": "cd worker && npm run deploy",
     "deploy:frontend": "cd frontend && npm run deploy",
-    "db:migrate": "npx wrangler d1 migrations apply pickle-live-db"
+    "db:migrate": "npx wrangler d1 migrations apply pickle-live-db",
+    "test": "vitest run --config tests/vitest.config.unit.js",
+    "test:watch": "vitest --config tests/vitest.config.unit.js"
   },
   "devDependencies": {
+    "vitest": "^4.1.9",
     "wrangler": "^4.0.0"
   }
 }

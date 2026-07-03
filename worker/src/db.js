@@ -4,11 +4,12 @@
 
 /**
  * Execute a query with optional bindings
+ * Uses .all() binding instead of .bind() to avoid D1 binding issues
  */
 export async function query(db, sql, ...bindings) {
-  const stmt = db.prepare(sql);
+  let stmt = db.prepare(sql);
   if (bindings && bindings.length > 0) {
-    stmt.bind(...bindings);
+    stmt = stmt.bind(...bindings);
   }
   const result = await stmt.all();
   return result.results || [];
@@ -18,9 +19,9 @@ export async function query(db, sql, ...bindings) {
  * Execute a query and return the first row
  */
 export async function queryOne(db, sql, ...bindings) {
-  const stmt = db.prepare(sql);
+  let stmt = db.prepare(sql);
   if (bindings && bindings.length > 0) {
-    stmt.bind(...bindings);
+    stmt = stmt.bind(...bindings);
   }
   const result = await stmt.first();
   return result || null;
@@ -30,9 +31,9 @@ export async function queryOne(db, sql, ...bindings) {
  * Execute a query that returns no rows (INSERT, UPDATE, DELETE)
  */
 export async function execute(db, sql, ...bindings) {
-  const stmt = db.prepare(sql);
+  let stmt = db.prepare(sql);
   if (bindings && bindings.length > 0) {
-    stmt.bind(...bindings);
+    stmt = stmt.bind(...bindings);
   }
   const result = await stmt.run();
   return result;
@@ -43,9 +44,9 @@ export async function execute(db, sql, ...bindings) {
  */
 export async function batch(db, statements) {
   const prepared = statements.map(([sql, ...bindings]) => {
-    const stmt = db.prepare(sql);
+    let stmt = db.prepare(sql);
     if (bindings && bindings.length > 0) {
-      stmt.bind(...bindings);
+      stmt = stmt.bind(...bindings);
     }
     return stmt;
   });

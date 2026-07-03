@@ -64,13 +64,36 @@ export const authApi = {
   login: (password) => request('POST', '/auth/login', { password }),
 };
 
+// Global players (across all events) - admin CRUD + batch add
+export const playersApi = {
+  listAll: () => request('GET', '/players'),
+  listGlobal: () => request('GET', '/admin/players', null, true),
+  create: (data) => request('POST', '/admin/players', data, true),
+  update: (id, data) => request('PUT', `/admin/players/${id}`, data, true),
+  delete: (id) => request('DELETE', `/admin/players/${id}`, null, true),
+  batchAddToEvent: (slug, playerIds) =>
+    request('POST', `/admin/events/${slug}/participants/batch`, { player_ids: playerIds }, true),
+};
+
+// Venues (saved venue/court presets)
+export const venuesApi = {
+  list: () => request('GET', '/admin/venues', null, true),
+  create: (data) => request('POST', '/admin/venues', data, true),
+  update: (id, data) => request('PUT', `/admin/venues/${id}`, data, true),
+  delete: (id) => request('DELETE', `/admin/venues/${id}`, null, true),
+};
+
 // Events
 export const eventsApi = {
+  listAll: () => request('GET', '/events'),
   get: (slug) => request('GET', `/events/${slug}`),
   getLive: (slug) => request('GET', `/events/${slug}/matches/live`),
+  getStandings: (slug) => request('GET', `/events/${slug}/standings`),
   create: (data) => request('POST', '/admin/events', data, true),
   update: (slug, data) => request('PUT', `/admin/events/${slug}`, data, true),
   uploadBanner: (slug, file) => upload(`/admin/events/${slug}/banner`, file),
+  delete: (slug) => request('DELETE', `/admin/events/${slug}`, null, true),
+  copy: (slug, data) => request('POST', `/admin/events/${slug}/copy`, data, true),
   getShareUrl: (slug) => request('GET', `/admin/events/${slug}/share`, null, true),
 };
 
@@ -88,6 +111,8 @@ export const teamsApi = {
   create: (slug, data) => request('POST', `/admin/events/${slug}/teams`, data, true),
   update: (slug, id, data) => request('PUT', `/admin/events/${slug}/teams/${id}`, data, true),
   delete: (slug, id) => request('DELETE', `/admin/events/${slug}/teams/${id}`, null, true),
+  unpairAll: (slug) => request('DELETE', `/admin/events/${slug}/teams`, null, true),
+  randomPair: (slug) => request('POST', `/admin/events/${slug}/teams/random-pair`, {}, true),
 };
 
 // Groups
@@ -121,7 +146,9 @@ export const matchesApi = {
   recordPoint: (slug, id, data) => request('POST', `/admin/events/${slug}/matches/${id}/point`, data, true),
   undo: (slug, id) => request('POST', `/admin/events/${slug}/matches/${id}/undo`, {}, true),
   complete: (slug, id, data) => request('POST', `/admin/events/${slug}/matches/${id}/complete`, data, true),
+  reset: (slug, id) => request('POST', `/admin/events/${slug}/matches/${id}/reset`, {}, true),
   walkover: (slug, id, winnerTeamId) => 
     request('POST', `/admin/events/${slug}/matches/${id}/walkover`, { winner_team_id: winnerTeamId }, true),
   advance: (slug, data) => request('POST', `/admin/events/${slug}/matches/advance`, data, true),
+  autoAdvance: (slug) => request('POST', `/admin/events/${slug}/matches/auto-advance`, {}, true),
 };

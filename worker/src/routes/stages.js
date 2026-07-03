@@ -27,7 +27,7 @@ stageRoutes.post('/:slug/stages', async (c) => {
 
   const result = await execute(db,
     'INSERT INTO stages (event_id, name, scoring_type, points_to_win, deuce_allowed, order_index) VALUES (?, ?, ?, ?, ?, ?)',
-    slug, body.name, body.scoring_type || 'rally', body.points_to_win || 21,
+    slug, body.name, body.scoring_type || 'rally', body.points_to_win || 15,
     body.deuce_allowed !== undefined ? (body.deuce_allowed ? 1 : 0) : 1,
     orderIndex
   );

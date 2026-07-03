@@ -4,6 +4,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { requireAdmin } from './auth.js';
+import { query, queryOne } from './db.js';
 import authRoutes from './routes/auth.js';
 import eventRoutes from './routes/events.js';
 import participantRoutes from './routes/participants.js';
@@ -35,13 +36,14 @@ app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISO
 // Auth routes (public)
 app.route('/api/auth', authRoutes);
 
-// Event banner serving (public)
+// Event banner serving (public) - R2 keys stored as banners/<filename>
 app.get('/api/banners/*', async (c) => {
-  const path = c.req.path.replace('/api/banners/', '');
+  const filename = c.req.path.replace('/api/banners/', '');
   const bucket = c.env.BUCKET;
   if (!bucket) return c.json({ error: 'Storage not configured' }, 500);
   try {
-    const obj = await bucket.get(path);
+    // Keys are stored with a banners/ prefix in R2 for organization
+    const obj = await bucket.get(`banners/${filename}`);
     if (!obj) return c.json({ error: 'Not found' }, 404);
     const headers = new Headers();
     obj.writeHttpMetadata(headers);
@@ -56,14 +58,12 @@ app.get('/api/banners/*', async (c) => {
 app.get('/api/events/:slug', async (c) => {
   const { slug } = c.req.param();
   const db = c.env.DB;
-  
-  // Reuse logic from eventRoutes
-  const { query, queryOne } = await import('./db.js');
+
   const event = await queryOne(db, 'SELECT * FROM events WHERE id = ?', slug);
   if (!event) return c.json({ error: 'Event not found' }, 404);
 
   const stages = await query(db, 'SELECT * FROM stages WHERE event_id = ? ORDER BY order_index ASC', slug);
-  
+
   const stagesWithData = [];
   for (const stage of stages) {
     const groups = await query(db, `
@@ -78,7 +78,9 @@ app.get('/api/events/:slug', async (c) => {
       const teams = await query(db, `
         SELECT t.*, 
           p1.name AS player1_name, p1.gender AS player1_gender,
-          p2.name AS player2_name, p2.gender AS player2_gender
+          p1.paddle AS player1_paddle, p1.handedness AS player1_handedness,
+          p2.name AS player2_name, p2.gender AS player2_gender,
+          p2.paddle AS player2_paddle, p2.handedness AS player2_handedness
         FROM teams t
         JOIN group_teams gt ON t.id = gt.team_id
         LEFT JOIN participants p1 ON t.player1_id = p1.id
@@ -115,20 +117,18 @@ app.get('/api/events/:slug', async (c) => {
 app.get('/api/events/:slug/matches/live', async (c) => {
   const { slug } = c.req.param();
   const db = c.env.DB;
-  
-  const { query } = await import('./db.js');
-  
+
   const matches = await query(db, `
     SELECT m.*,
       t1.name AS team1_name, t2.name AS team2_name,
       p1.name AS team1_player1_name, p2.name AS team1_player2_name,
       p3.name AS team2_player1_name, p4.name AS team2_player2_name,
       s.scoring_type, s.points_to_win, s.deuce_allowed,
-      g.name AS group_name, st.name AS stage_name
+      g.name AS group_name,
+      s.name AS stage_name
     FROM matches m
     JOIN stages s ON m.stage_id = s.id
     JOIN groups_t g ON m.group_id = g.id
-    JOIN stages st ON m.stage_id = st.id
     LEFT JOIN teams t1 ON m.team1_id = t1.id
     LEFT JOIN teams t2 ON m.team2_id = t2.id
     LEFT JOIN participants p1 ON t1.player1_id = p1.id

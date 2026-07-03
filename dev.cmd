@@ -32,9 +32,9 @@ if %ERRORLEVEL% neq 0 (
     echo [INFO] Local migrations applied or DB already exists.
 )
 
-:: Start Worker in background (miniflare)
+:: Start Worker in background (miniflare) - run from ROOT so wrangler.toml is found
 echo Starting Worker API on port 8787...
-start "Pickle-Live Worker" cmd /c "cd /d "%~dp0worker" && npx wrangler dev --port 8787 --ip 127.0.0.1"
+start "Pickle-Live Worker" cmd /c "cd /d "%~dp0" && npx wrangler dev --port 8787 --ip 127.0.0.1"
 
 :: Wait a moment for worker to start
 echo Waiting for Worker to start...
@@ -48,6 +48,10 @@ echo.
 echo ===== Both servers starting =====
 echo Frontend: http://127.0.0.1:5173
 echo Worker:  http://127.0.0.1:8787
+echo.
+echo Opening browser tabs...
+explorer "http://127.0.0.1:5173"
+explorer "http://127.0.0.1:8787"
 echo.
 echo Close the terminal windows to stop the servers.
 pause

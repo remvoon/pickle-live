@@ -29,16 +29,40 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
+:: Step 0: Push latest code to GitHub using PAT (no remote URL modification)
+echo [0/6] Pushing latest code to GitHub...
+if not "%BOTC_GH_PAT%"=="" (
+    where git >nul 2>&1
+    if !ERRORLEVEL! equ 0 (
+        :: Use direct URL push - never modifies the remote origin URL
+        set "GIT_PUSH_URL=https://remvoon:%BOTC_GH_PAT%@github.com/remvoon/pickle-live.git"
+        git add -A
+        git commit --allow-empty -m "Auto-deploy commit" >nul 2>&1
+        git push "%GIT_PUSH_URL%" main
+        if !ERRORLEVEL! equ 0 (
+            echo [OK] Code pushed to GitHub successfully.
+        ) else (
+            echo [WARNING] Git push failed. Check your PAT and network connection.
+        )
+        set "GIT_PUSH_URL="
+    ) else (
+        echo [WARNING] git not found. Skipping GitHub push.
+    )
+) else (
+    echo [SKIP] BOTC_GH_PAT not set. Skipping GitHub push.
+)
+echo.
+
 :: Step 1: Apply D1 migrations
-echo [1/5] Applying D1 database migrations...
+echo [1/6] Applying D1 database migrations...
 npx wrangler d1 migrations apply pickle-live-db --remote
 if %ERRORLEVEL% neq 0 (
     echo [WARNING] Migration may have failed. Check your D1 database configuration.
 )
 
-:: Step 2: Deploy Worker API
-echo [2/5] Deploying Worker API...
-cd /d "%~dp0worker"
+:: Step 2: Deploy Worker API (run from root so wrangler.toml is found)
+echo [2/6] Deploying Worker API...
+cd /d "%~dp0"
 npx wrangler deploy --routes-only=false
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] Worker deployment failed.
@@ -46,8 +70,8 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-:: Step 3: Build frontend
-echo [3/5] Building Frontend...
+:: Step 3: Build frontend (vite, doesn't need wrangler)
+echo [3/6] Building Frontend...
 cd /d "%~dp0frontend"
 call npx vite build
 if %ERRORLEVEL% neq 0 (
@@ -56,8 +80,8 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-:: Step 4: Deploy to Cloudflare Pages
-echo [4/5] Deploying Frontend to Cloudflare Pages...
+:: Step 4: Deploy to Cloudflare Pages (wrangler.toml now exists in frontend/)
+echo [4/6] Deploying Frontend to Cloudflare Pages...
 npx wrangler pages deploy dist --project-name=pickle-live
 if %ERRORLEVEL% neq 0 (
     echo [ERROR] Frontend deployment failed.
@@ -66,7 +90,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 :: Step 5: Set secrets (non-interactive from environment if available)
-echo [5/5] Setting secrets...
+echo [5/6] Setting secrets...
 cd /d "%~dp0"
 
 :: ADMIN_PASSWORD - check environment first, then prompt

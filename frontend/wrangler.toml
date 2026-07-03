@@ -1,0 +1,9 @@
+# Frontend Pages configuration for pickle-live
+# Used by `npx wrangler pages deploy` when run from this directory
+
+name = "pickle-live"
+compatibility_date = "2025-04-01"
+
+[pages]
+build_command = "npm run build"
+build_output_dir = "dist"

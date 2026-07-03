@@ -13,10 +13,9 @@ database_id = "your-d1-database-id-here"
 binding = "BUCKET"
 bucket_name = "pickle-live-banners"
 
-# Environment variables (set via `npx wrangler secret put ADMIN_PASSWORD`)
+# Secrets are set via `npx wrangler secret put ADMIN_PASSWORD` (remote)
+# For local dev, use .dev.vars file (already created) - it overrides [vars]
 [vars]
-ADMIN_PASSWORD = ""
-JWT_SECRET = ""
 ALLOWED_ORIGINS = "*"
 
 [env.production]

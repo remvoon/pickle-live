@@ -1,0 +1,6 @@
+# Worker-specific config - wrangler CLI needs this when run from worker/
+# The root wrangler.toml at ../wrangler.toml is the canonical config.
+# This is just a shim so `cd worker && wrangler dev` works.
+name = "pickle-live"
+main = "src/index.js"
+compatibility_date = "2025-04-01"

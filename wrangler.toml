@@ -1,0 +1,23 @@
+name = "pickle-live"
+main = "worker/src/index.js"
+compatibility_date = "2025-04-01"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "pickle-live-db"
+database_id = "your-d1-database-id-here"
+
+# R2 Bucket
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "pickle-live-banners"
+
+# Environment variables (set via `npx wrangler secret put ADMIN_PASSWORD`)
+[vars]
+ADMIN_PASSWORD = ""
+JWT_SECRET = ""
+ALLOWED_ORIGINS = "*"
+
+[env.production]
+vars = { ALLOWED_ORIGINS = "https://pickle-live.pages.dev" }
